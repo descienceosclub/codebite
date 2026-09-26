@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100 font-sans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeBite: Gamified Web Dev Arena</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#22c55e',
+              greenDark: '#16a34a',
+              blue: '#3b82f6',
+              purple: '#a855f7',
+              orange: '#f97316',
+              yellow: '#eab308',
+              pink: '#ec4899',
+            }
+          },
+          fontFamily: {
+            sans: ['Fredoka', 'Nunito', 'sans-serif'],
+            mono: ['Fira Code', 'Courier New', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* Custom Styles & Duolingo 3D Button Utility Effects */
+    .btn-3d {
+      transition: all 0.1s ease;
+      box-shadow: 0 4px 0 var(--tw-shadow-color, #15803d);
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 var(--tw-shadow-color, #15803d);
+    }
+    .btn-3d-blue {
+      box-shadow: 0 4px 0 #1d4ed8;
+    }
+    .btn-3d-blue:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #1d4ed8;
+    }
+    .btn-3d-purple {
+      box-shadow: 0 4px 0 #7e22ce;
+    }
+    .btn-3d-purple:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #7e22ce;
+    }
+    .btn-3d-gray {
+      box-shadow: 0 4px 0 #334155;
+    }
+    .btn-3d-gray:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #334155;
+    }
+    
+    /* Smooth Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Winding Skill Path Styling */
+    .node-offset-0 { transform: translateX(0px); }
+    .node-offset-1 { transform: translateX(45px); }
+    .node-offset-2 { transform: translateX(0px); }
+    .node-offset-3 { transform: translateX(-45px); }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-900 text-slate-100 select-none overflow-x-hidden">
+
+  <!-- TOP HEADER NAV BAR -->
+  <header class="sticky top-0 z-30 bg-slate-800/90 backdrop-blur border-b border-slate-700 px-4 py-2.5 flex items-center justify-between">
+    <!-- Logo & Title -->
+    <div class="flex items-center gap-3 cursor-pointer" id="nav-brand">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-green-500 to-emerald-400 flex items-center justify-center text-slate-900 text-xl font-bold shadow-lg shadow-green-500/20">
+        <i class="fa-solid fa-code"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent leading-none">
+          CodeBite
+        </h1>
+        <span class="text-xs text-slate-400 font-medium">Gamified Web Dev Arena</span>
+      </div>
+    </div>
+
+    <!-- Center Navigation Tabs -->
+    <nav class="hidden md:flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-700/60">
+      <button id="nav-btn-path" class="px-4 py-1.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all bg-green-500 text-slate-950 shadow-md">
+        <i class="fa-solid fa-map-location-dot"></i> Learn Path
+      </button>
+      <button id="nav-btn-playground" class="px-4 py-1.5 rounded-xl font-bold text-sm flex items-center gap-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+        <i class="fa-solid fa-terminal"></i> Sandbox
+      </button>
+    </nav>
+
+    <!-- Header User Gamification Stats -->
+    <div class="flex items-center gap-2 md:gap-4">
+      <!-- Skill Level Badge / Selector Button -->
+      <button id="btn-change-level" class="flex items-center gap-1.5 bg-slate-700/60 hover:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-600/60 text-xs font-bold transition text-emerald-400">
+        <i class="fa-solid fa-layer-group"></i>
+        <span id="header-level-name">Entry</span>
+      </button>
+
+      <!-- Streaks -->
+      <div class="flex items-center gap-1.5 bg-slate-800 border border-orange-500/30 px-3 py-1.5 rounded-xl text-orange-400 font-bold text-sm shadow-sm" title="Daily Streak">
+        <i class="fa-solid fa-fire text-orange-500 animate-pulse"></i>
+        <span id="stat-streak">1</span>
+      </div>
+
+      <!-- Lives / Hearts -->
+      <div id="hearts-container" class="flex items-center gap-1.5 bg-slate-800 border border-red-500/30 px-3 py-1.5 rounded-xl text-red-400 font-bold text-sm cursor-pointer hover:bg-slate-750 transition" title="Click for Hearts Refill Drill">
+        <i class="fa-solid fa-heart text-red-500"></i>
+        <span id="stat-hearts">5</span>/5
+      </div>
+
+      <!-- Total XP -->
+      <div class="flex items-center gap-1.5 bg-slate-800 border border-yellow-500/30 px-3 py-1.5 rounded-xl text-yellow-400 font-bold text-sm shadow-sm" title="Total XP">
+        <i class="fa-solid fa-bolt text-yellow-400"></i>
+        <span id="stat-xp">0</span> XP
+      </div>
+
+      <!-- Settings Icon -->
+      <button id="btn-settings" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-800 border-t border-slate-700 flex justify-around p-2">
+    <button id="mob-nav-path" class="flex-1 py-2 rounded-xl font-bold text-xs flex flex-col items-center gap-1 text-green-400">
+      <i class="fa-solid fa-map-location-dot text-lg"></i> Learn Path
+    </button>
+    <button id="mob-nav-playground" class="flex-1 py-2 rounded-xl font-bold text-xs flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-terminal text-lg"></i> Sandbox
+    </button>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 overflow-y-auto relative pb-20 md:pb-6">
+    
+    <!-- SECTION 1: LEARNING PATH (HOME VIEW) -->
+    <section id="view-path" class="max-w-4xl mx-auto px-4 py-8">
+      <!-- Welcome Hero Banner -->
+      <div class="bg-gradient-to-r from-emerald-900/40 via-slate-800 to-indigo-900/40 rounded-3xl p-6 border border-emerald-500/20 mb-8 relative overflow-hidden shadow-xl">
+        <div class="relative z-10">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-3">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Gen Z Web Dev Quest
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-2">
+            Master Frontend Engineering One Bite at a Time! 🚀
+          </h2>
+          <p class="text-slate-300 text-sm max-w-2xl">
+            Learn HTML5, CSS3, JavaScript, and jQuery through beat-by-beat interactive challenges. Earn XP, maintain your streak, and build real mini-projects!
+          </p>
+        </div>
+        <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl text-emerald-400 pointer-events-none">
+          <i class="fa-solid fa-code"></i>
+        </div>
+      </div>
+
+      <!-- Track Switcher Header -->
+      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h3 class="text-lg font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-route text-green-400"></i> Skill Roadmap
+        </h3>
+        <div id="track-pills" class="flex gap-2 overflow-x-auto pb-1 max-w-full">
+          <!-- Dynamic Track Selector Pills -->
+        </div>
+      </div>
+
+      <!-- Skill Path Nodes Container -->
+      <div id="path-nodes-container" class="flex flex-col items-center py-6 relative min-h-[400px]">
+        <!-- Vertical Winding Path Line rendered via JS / CSS -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: LESSON MODAL / SCREEN (3-BEAT FLOW) -->
+    <section id="view-lesson" class="hidden fixed inset-0 z-50 bg-slate-950 flex flex-col">
+      <!-- Lesson Top Bar -->
+      <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <button id="btn-close-lesson" class="text-slate-400 hover:text-white transition text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <!-- Lesson Progress Bar -->
+        <div class="flex-1 max-w-md mx-6">
+          <div class="flex justify-between text-xs font-bold text-slate-400 mb-1">
+            <span id="lesson-progress-text">Beat 1 of 3</span>
+            <span id="lesson-title-header">Lesson Title</span>
+          </div>
+          <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+            <div id="lesson-progress-bar" class="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-300 w-1/3"></div>
+          </div>
+        </div>
+        <!-- Lives Indicator inside lesson -->
+        <div class="flex items-center gap-1.5 text-red-400 font-bold text-sm bg-slate-800 px-3 py-1.5 rounded-xl border border-red-500/20">
+          <i class="fa-solid fa-heart"></i>
+          <span id="lesson-hearts-count">5</span>
+        </div>
+      </header>
+
+      <!-- Lesson Body -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center items-center">
+        <div class="w-full max-w-3xl">
+
+          <!-- BEAT 1: CONCEPT CARD (Syntax + ELI5 + Runnable Mini Preview) -->
+          <div id="beat-1-card" class="beat-step bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-xs font-extrabold uppercase border border-blue-500/20">Beat 1: Concept Bite</span>
+              <h3 id="beat1-topic-title" class="text-xl md:text-2xl font-bold text-white">Title</h3>
+            </div>
+
+            <!-- 1. Syntax Rule Box -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-code text-green-400"></i> Syntax Blueprint
+              </label>
+              <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-emerald-400 text-sm overflow-x-auto shadow-inner" id="beat1-syntax-code">
+                // Syntax goes here
+              </div>
+            </div>
+
+            <!-- 2. Simple Explanation (ELI5) -->
+            <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 space-y-1">
+              <label class="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-lightbulb"></i> ELI5 (Explain Like I'm 5)
+              </label>
+              <p id="beat1-eli5-text" class="text-slate-200 text-sm leading-relaxed">
+                Explanation text goes here...
+              </p>
+            </div>
+
+            <!-- 3. Live Runnable Example -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-play text-blue-400"></i> Live Mini-Example
+              </label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto" id="beat1-example-code">
+                  <!-- Runnable Snippet -->
+                </div>
+                <div class="bg-white rounded-2xl p-3 text-slate-900 border border-slate-300 min-h-[100px] flex flex-col justify-center items-center text-center shadow-md relative" id="beat1-preview-box">
+                  <!-- Output Preview -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Next Action Button -->
+            <div class="pt-4 flex justify-end">
+              <button id="btn-beat1-next" class="px-8 py-3 bg-green-500 hover:bg-green-400 text-slate-950 font-extrabold text-base rounded-2xl btn-3d shadow-green-700 flex items-center gap-2">
+                Got It! Next Beat <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- BEAT 2: INTERACTIVE MICRO-TASK (Fill-in-blank / Bug Hunt) -->
+          <div id="beat-2-card" class="beat-step hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 bg-yellow-500/10 text-yellow-400 rounded-lg text-xs font-extrabold uppercase border border-yellow-500/20">Beat 2: Micro Challenge</span>
+              <h3 class="text-xl md:text-2xl font-bold text-white">Fill in the Missing Code!</h3>
+            </div>
+
+            <p id="beat2-instruction" class="text-slate-300 text-sm">
+              Instruction text...
+            </p>
+
+            <!-- Code snippet with slot -->
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 font-mono text-sm md:text-base leading-loose text-slate-200" id="beat2-code-prompt">
+              <!-- Code with blank slot -->
+            </div>
+
+            <!-- Options Chips -->
+            <div class="space-y-2">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap the correct chip:</span>
+              <div id="beat2-options-container" class="flex flex-wrap gap-3 pt-2">
+                <!-- Option buttons populated by JS -->
+              </div>
+            </div>
+
+            <!-- Feedback Message -->
+            <div id="beat2-feedback" class="hidden p-4 rounded-2xl text-sm font-bold flex items-center gap-3"></div>
+
+            <!-- Beat 2 Navigation -->
+            <div class="pt-4 flex justify-between items-center">
+              <button id="btn-beat2-prev" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-sm">
+                Back
+              </button>
+              <button id="btn-beat2-check" class="px-8 py-3 bg-blue-500 hover:bg-blue-400 text-white font-extrabold text-base rounded-2xl btn-3d-blue flex items-center gap-2">
+                Check Answer <i class="fa-solid fa-check"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- BEAT 3: INSTANT SANDBOX PRACTICE -->
+          <div id="beat-3-card" class="beat-step hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-extrabold uppercase border border-purple-500/20">Beat 3: Live Sandbox Test</span>
+              <h3 class="text-xl md:text-2xl font-bold text-white">Write the Code & Pass the Test!</h3>
+            </div>
+
+            <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/60 text-sm text-slate-200">
+              <strong class="text-purple-400">Target Objective:</strong> <span id="beat3-objective">Objective text</span>
+            </div>
+
+            <!-- Mini Editor & Live Output -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Code Input Area -->
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Code</label>
+                  <button id="btn-reset-beat3-code" class="text-xs text-slate-500 hover:text-slate-300">Reset</button>
+                </div>
+                <textarea id="beat3-code-editor" class="w-full h-44 bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-emerald-400 focus:outline-none focus:border-purple-500 resize-none shadow-inner" spellcheck="false"></textarea>
+              </div>
+
+              <!-- Output Preview Container -->
+              <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Preview</label>
+                <div class="w-full h-44 bg-white rounded-2xl border border-slate-300 overflow-hidden relative shadow-md">
+                  <iframe id="beat3-preview-iframe" class="w-full h-full border-none"></iframe>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feedback Alert -->
+            <div id="beat3-feedback" class="hidden p-4 rounded-2xl text-sm font-bold flex items-center gap-3"></div>
+
+            <!-- Beat 3 Navigation -->
+            <div class="pt-4 flex justify-between items-center">
+              <button id="btn-beat3-prev" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-sm">
+                Back
+              </button>
+              <button id="btn-beat3-submit" class="px-8 py-3 bg-green-500 hover:bg-green-400 text-slate-950 font-extrabold text-base rounded-2xl btn-3d shadow-green-700 flex items-center gap-2">
+                Submit & Complete <i class="fa-solid fa-trophy"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: FULL PLAYGROUND / SANDBOX VIEW -->
+    <section id="view-playground" class="hidden max-w-6xl mx-auto px-4 py-6 h-full flex flex-col space-y-4">
+      <!-- Top Control Toolbar -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-flask"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base leading-none">CodeBite Web Sandbox</h3>
+            <span class="text-xs text-slate-400">Live HTML / CSS / JS / jQuery Workbench</span>
+          </div>
+        </div>
+
+        <!-- Starter Kits Dropdown -->
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-bold text-slate-400 uppercase hidden sm:inline">Starter Templates:</label>
+          <select id="select-starter-kit" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-200 focus:outline-none focus:border-purple-500 cursor-pointer">
+            <option value="jquery-bg">1. jQuery BG Switcher (HTML + jQuery)</option>
+            <option value="flex-card">2. Responsive Flexbox Card (HTML + CSS)</option>
+            <option value="char-counter">3. Character Counter (HTML + JS)</option>
+          </select>
+          <button id="btn-run-playground" class="px-5 py-2 bg-green-500 hover:bg-green-400 text-slate-950 font-extrabold text-xs rounded-xl btn-3d shadow-green-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-play"></i> Run Code (+20 XP)
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor & Preview Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[500px]">
+        <!-- Code Editors Column (Tabs for HTML, CSS, JS) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+          <!-- Editor Tabs -->
+          <div class="bg-slate-950 border-b border-slate-800 flex items-center px-2 pt-2 gap-1">
+            <button id="pg-tab-html" class="pg-tab-btn active px-4 py-2 rounded-t-xl font-mono text-xs font-bold bg-slate-900 text-orange-400 border-t border-x border-slate-800 flex items-center gap-2">
+              <i class="fa-brands fa-html5 text-orange-500"></i> HTML
+            </button>
+            <button id="pg-tab-css" class="pg-tab-btn px-4 py-2 rounded-t-xl font-mono text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-2">
+              <i class="fa-brands fa-css3-alt text-blue-500"></i> CSS
+            </button>
+            <button id="pg-tab-js" class="pg-tab-btn px-4 py-2 rounded-t-xl font-mono text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-2">
+              <i class="fa-brands fa-js text-yellow-500"></i> JS / jQuery
+            </button>
+          </div>
+
+          <!-- Code Textareas -->
+          <div class="flex-1 relative p-3 bg-slate-950">
+            <textarea id="pg-code-html" class="pg-code-area w-full h-full bg-transparent font-mono text-xs text-slate-200 focus:outline-none resize-none" spellcheck="false" placeholder="<!-- Write HTML here -->"></textarea>
+            <textarea id="pg-code-css" class="pg-code-area hidden w-full h-full bg-transparent font-mono text-xs text-blue-300 focus:outline-none resize-none" spellcheck="false" placeholder="/* Write CSS here */"></textarea>
+            <textarea id="pg-code-js" class="pg-code-area hidden w-full h-full bg-transparent font-mono text-xs text-yellow-300 focus:outline-none resize-none" spellcheck="false" placeholder="// Write JS / jQuery here"></textarea>
+          </div>
+        </div>
+
+        <!-- Live Preview Column -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+          <div class="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-desktop text-green-400"></i> Live Output Canvas
+            </span>
+            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Auto-rendering</span>
+          </div>
+          <div class="flex-1 bg-white relative">
+            <iframe id="pg-preview-iframe" class="w-full h-full border-none"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: LEVEL SELECTOR ONBOARDING -->
+  <div id="modal-level-select" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-green-500 to-emerald-400 mx-auto flex items-center justify-center text-slate-950 text-3xl font-bold shadow-lg shadow-green-500/30">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">Select Your Coding Skill Level</h2>
+        <p class="text-xs text-slate-400">Customizes your recommended tracks and initial exercise difficulty.</p>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Entry Level Option -->
+        <button data-level="Entry" class="opt-level-btn w-full p-4 rounded-2xl border border-slate-800 bg-slate-950 hover:border-green-500/60 hover:bg-slate-800/80 text-left transition flex items-center gap-4 group">
+          <div class="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+            🌱
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-base">Entry Level</h4>
+            <p class="text-xs text-slate-400">HTML tags, basic CSS colors, font styling & simple selectors.</p>
+          </div>
+        </button>
+
+        <!-- Pro Level Option -->
+        <button data-level="Pro" class="opt-level-btn w-full p-4 rounded-2xl border border-slate-800 bg-slate-950 hover:border-blue-500/60 hover:bg-slate-800/80 text-left transition flex items-center gap-4 group">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+            ⚡
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-base">Pro Level</h4>
+            <p class="text-xs text-slate-400">Flexbox, Grid, DOM events, ES6 functions & jQuery click handlers.</p>
+          </div>
+        </button>
+
+        <!-- Expert Level Option -->
+        <button data-level="Expert" class="opt-level-btn w-full p-4 rounded-2xl border border-slate-800 bg-slate-950 hover:border-purple-500/60 hover:bg-slate-800/80 text-left transition flex items-center gap-4 group">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+            🔥
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-white text-base">Expert Level</h4>
+            <p class="text-xs text-slate-400">Advanced JS callbacks, chained jQuery animations & dynamic DOM mutations.</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS & PROGRESS MANAGEMENT -->
+  <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+        <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-green-400"></i> Settings & State
+        </h3>
+        <button id="btn-close-settings" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs font-bold">
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-slate-400 uppercase">Current Skill Level:</span>
+          <div class="flex justify-between items-center text-white">
+            <span id="settings-level-val" class="text-base font-extrabold text-emerald-400">Entry</span>
+            <button id="btn-reselect-level" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200">
+              Change
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <span class="text-slate-400 uppercase">Data Backup & Reset</span>
+          <div class="flex gap-3">
+            <button id="btn-export-json" class="flex-1 py-3 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-xl border border-slate-700 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-download"></i> Export JSON
+            </button>
+            <button id="btn-reset-data" class="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/30 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-trash"></i> Reset Progress
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WARM-UP HEARTS REFILL DRILL -->
+  <div id="modal-hearts-refill" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 text-center">
+      <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 mx-auto flex items-center justify-center text-3xl font-bold animate-bounce">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-extrabold text-white mb-1">Heart Refill Drill</h3>
+        <p class="text-xs text-slate-400">Answer this quick trivia question correctly to instantly restore 1 Heart!</p>
+      </div>
+
+      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left text-xs font-mono text-slate-200 space-y-3">
+        <p id="refill-question-text">Which HTML tag is used to create an un-ordered bulleted list?</p>
+        <div id="refill-options-container" class="space-y-2 pt-2">
+          <!-- Refill options -->
+        </div>
+      </div>
+
+      <!-- In-Card Modern Feedback Banner -->
+      <div id="refill-feedback" class="hidden p-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2"></div>
+
+      <div class="flex justify-end gap-2">
+        <button id="btn-close-refill" class="px-4 py-2 bg-slate-800 text-slate-400 rounded-xl text-xs font-bold">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & CURRICULUM SCRIPT -->
+  <script>
+    /* ==========================================================================
+       1. LESSON CURRICULUM DATABASE (HTML5, CSS3, JavaScript, jQuery)
+       ========================================================================== */
+    const CURRICULUM = {
+      html: {
+        title: "HTML5 Fundamentals",
+        color: "orange",
+        icon: "fa-brands fa-html5",
+        nodes: [
+          {
+            id: "html-1",
+            title: "HTML Structural Tags",
+            beat1: {
+              syntax: "<h1>Heading</h1>\n<p>Paragraph content</p>",
+              eli5: "HTML tags are like labels on boxes. They tell the browser what kind of content is inside, like a heading title or a block of text.",
+              exampleHtml: "<h2 style='color:#0f172a; font-weight:bold;'>Hello World!</h2><p style='color:#475569;'>This is a bite-sized paragraph.</p>"
+            },
+            beat2: {
+              instruction: "Select the correct tag used for a primary top-level heading in HTML:",
+              codePrompt: "<___>Welcome to CodeBite</___>",
+              options: ["h1", "heading", "title", "header"],
+              correct: "h1"
+            },
+            beat3: {
+              objective: "Create an <h1> element with the exact text 'Web Dev Arena' inside the editor.",
+              initialCode: "<!-- Write your h1 tag below -->\n",
+              validate: (code) => {
+                const regex = /<h1\b[^>]*>\s*Web Dev Arena\s*<\/h1>/i;
+                return regex.test(code);
+              }
+            }
+          },
+          {
+            id: "html-2",
+            title: "Links & Images",
+            beat1: {
+              syntax: '<a href="https://example.com">Click Me</a>\n<img src="pic.jpg" alt="Description" />',
+              eli5: "Links connect web pages together using href, while image tags embed pictures into your site using src.",
+              exampleHtml: "<a href='#' style='color:#2563eb; font-weight:bold; text-decoration:underline;'>Visit CodeBite</a><br/><br/><img src='https://via.placeholder.com/80/22c55e/ffffff?text=Bite' style='border-radius:8px;' />"
+            },
+            beat2: {
+              instruction: "Which attribute specifies the target web address URL inside an <a> tag?",
+              codePrompt: '<a ___="https://codebite.dev">Start Learning</a>',
+              options: ["href", "src", "link", "target"],
+              correct: "href"
+            },
+            beat3: {
+              objective: "Create an <a> tag with href='https://codebite.dev' containing the text 'Launch'.",
+              initialCode: "<!-- Write link tag below -->\n",
+              validate: (code) => {
+                const regex = /<a\s+[^>]*href=["']https:\/\/codebite\.dev["'][^>]*>\s*Launch\s*<\/a>/i;
+                return regex.test(code);
+              }
+            }
+          }
+        ]
+      },
+      css: {
+        title: "CSS3 Styling & Layout",
+        color: "blue",
+        icon: "fa-brands fa-css3-alt",
+        nodes: [
+          {
+            id: "css-1",
+            title: "Colors & Font Basics",
+            beat1: {
+              syntax: "p {\n  color: #22c55e;\n  font-size: 18px;\n}",
+              eli5: "CSS styles your raw HTML elements like paint and typography, customizing colors, fonts, and sizing.",
+              exampleHtml: "<p style='color:#22c55e; font-size:20px; font-weight:bold; font-family:sans-serif;'>Vibrant Styled Text!</p>"
+            },
+            beat2: {
+              instruction: "Which property changes the text color of an element in CSS?",
+              codePrompt: "h1 {\n  ___: #3b82f6;\n}",
+              options: ["color", "font-color", "text-style", "background-color"],
+              correct: "color"
+            },
+            beat3: {
+              objective: "Style a <p> tag with inline CSS or style tag so its color is red (e.g. style='color: red;').",
+              initialCode: "<p style='color: red;'>Red Alert</p>",
+              validate: (code) => {
+                return /color\s*:\s*red/i.test(code) && /Red Alert/i.test(code);
+              }
+            }
+          },
+          {
+            id: "css-2",
+            title: "Flexbox Layout",
+            beat1: {
+              syntax: ".container {\n  display: flex;\n  justify-content: space-between;\n}",
+              eli5: "Flexbox is a super-power layout mode that easily aligns items horizontally or vertically in rows and columns.",
+              exampleHtml: "<div style='display:flex; justify-content:space-around; background:#f1f5f9; padding:10px; border-radius:8px;'><span style='background:#22c55e; color:#fff; padding:6px 12px; border-radius:6px;'>Item 1</span><span style='background:#3b82f6; color:#fff; padding:6px 12px; border-radius:6px;'>Item 2</span></div>"
+            },
+            beat2: {
+              instruction: "What CSS property turns a container element into a flex container?",
+              codePrompt: ".box {\n  ___: flex;\n}",
+              options: ["display", "flex-direction", "layout", "align-items"],
+              correct: "display"
+            },
+            beat3: {
+              objective: "Create a container `div` with CSS `display: flex;`.",
+              initialCode: "<div style='display: flex;'>\n  <span>Flex Child</span>\n</div>",
+              validate: (code) => {
+                return /display\s*:\s*flex/i.test(code);
+              }
+            }
+          }
+        ]
+      },
+      js: {
+        title: "JavaScript Logic",
+        color: "yellow",
+        icon: "fa-brands fa-js",
+        nodes: [
+          {
+            id: "js-1",
+            title: "Variables & Functions",
+            beat1: {
+              syntax: "const score = 100;\nfunction addXp(amount) {\n  return score + amount;\n}",
+              eli5: "Variables store data values, while functions are reusable blocks of code that perform actions when called.",
+              exampleHtml: "<div id='out' style='font-family:sans-serif; font-weight:bold; color:#0f172a;'>XP: 120</div>"
+            },
+            beat2: {
+              instruction: "Which keyword declares a modern constant variable in JavaScript?",
+              codePrompt: "___ totalStreak = 5;",
+              options: ["const", "var", "def", "let-const"],
+              correct: "const"
+            },
+            beat3: {
+              objective: "Write a script tag with `const xp = 10;` inside it.",
+              initialCode: "<script>\n  // Declare variable here\n  \n<\/script>",
+              validate: (code) => {
+                return /const\s+xp\s*=\s*10/i.test(code);
+              }
+            }
+          },
+          {
+            id: "js-2",
+            title: "DOM Query & Text Change",
+            beat1: {
+              syntax: "document.getElementById('demo').innerText = 'Updated!';",
+              eli5: "The DOM allows JavaScript to select HTML elements on the page and dynamically change their content or styles.",
+              exampleHtml: "<button onclick=\"document.getElementById('txt').innerText='BOOM!'\" style='background:#a855f7; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;'>Click Me</button><p id='txt' style='margin-top:8px; color:#334155; font-weight:bold;'>Original Text</p>"
+            },
+            beat2: {
+              instruction: "Which method selects an element by its unique HTML ID attribute in Vanilla JS?",
+              codePrompt: "document.________________('title')",
+              options: ["getElementById", "querySelector", "getElementByClass", "findId"],
+              correct: "getElementById"
+            },
+            beat3: {
+              objective: "Change an element's text using `innerText = 'Success'` inside a script block.",
+              initialCode: "<h2 id='target'>Old</h2>\n<script>\n  document.getElementById('target').innerText = 'Success';\n<\/script>",
+              validate: (code) => {
+                return /document\.getElementById\(["']target["']\)\.innerText\s*=\s*["']Success["']/i.test(code);
+              }
+            }
+          }
+        ]
+      },
+      jquery: {
+        title: "jQuery Power",
+        color: "purple",
+        icon: "fa-solid fa-bolt",
+        nodes: [
+          {
+            id: "jq-1",
+            title: "Selectors & .click()",
+            beat1: {
+              syntax: "$('#btn').click(function() {\n  alert('Clicked!');\n});",
+              eli5: "jQuery uses dollar sign selector `$('selector')` to quickly grab HTML elements and attach interactive event handlers.",
+              exampleHtml: "<button id='jq-btn' style='background:#22c55e; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;'>jQuery Click</button><script>$('#jq-btn').click(function(){ alert('jQuery Power!'); });<\/script>"
+            },
+            beat2: {
+              instruction: "What symbol does jQuery use as a shorthand to query elements?",
+              codePrompt: "___('#myDiv').hide();",
+              options: ["$", "jQuerySelector", "@", "elem"],
+              correct: "$"
+            },
+            beat3: {
+              objective: "Write a jQuery click handler targeting `#box` with `$('#box').click(...)`.",
+              initialCode: "<button id='box'>Tap</button>\n<script>\n  $('#box').click(function(){\n    // Code here\n  });\n<\/script>",
+              validate: (code) => {
+                return /\$\(["']#box["']\)\.click\(/i.test(code);
+              }
+            }
+          },
+          {
+            id: "jq-2",
+            title: ".hide(), .show() & Chaining",
+            beat1: {
+              syntax: "$('#card').hide().fadeIn(500);",
+              eli5: "jQuery makes animations easy. Chaining allows you to run multiple actions back-to-back on the same element in a single line!",
+              exampleHtml: "<div id='card-demo' style='background:#e2e8f0; p-4; padding:12px; border-radius:8px; color:#0f172a; font-weight:bold;'>Animated Box</div><br/><button onclick=\"$('#card-demo').fadeOut(300).fadeIn(300)\" style='background:#3b82f6; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;'>Animate Chain</button>"
+            },
+            beat2: {
+              instruction: "Which jQuery method hides a targeted HTML element?",
+              codePrompt: "$('.alert').____();",
+              options: ["hide", "removeDisplay", "invisible", "conceal"],
+              correct: "hide"
+            },
+            beat3: {
+              objective: "Use `$('#demo').hide()` inside a script tag to hide the element.",
+              initialCode: "<div id='demo'>Hide Me</div>\n<script>\n  $('#demo').hide();\n<\/script>",
+              validate: (code) => {
+                return /\$\(["']#demo["']\)\.hide\(\)/i.test(code);
+              }
+            }
+          }
+        ]
+      }
+    };
+
+    /* ==========================================================================
+       2. APP STATE MANAGEMENT & LOCAL STORAGE
+       ========================================================================== */
+    const STORAGE_KEY = "CODEBITE_USER_STATE_V1";
+
+    const defaultState = {
+      level: null, // "Entry", "Pro", "Expert"
+      xp: 0,
+      streak: 1,
+      lastActiveDate: new Date().toISOString().split('T')[0],
+      hearts: 5,
+      completedNodes: [], // Array of node IDs e.g. ["html-1"]
+      activeTrack: "html"
+    };
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Check & Update daily streak logic
+          const today = new Date().toISOString().split('T')[0];
+          if (parsed.lastActiveDate !== today) {
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            if (parsed.lastActiveDate === yesterday) {
+              parsed.streak += 1;
+            } else {
+              parsed.streak = 1; // Streak reset if missed a day
+            }
+            parsed.lastActiveDate = today;
+          }
+          return { ...defaultState, ...parsed };
+        }
+      } catch (e) {
+        console.error("Failed to load local state", e);
+      }
+      return { ...defaultState };
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        updateHeaderUI();
+      } catch (e) {
+        console.error("Failed to save state", e);
+      }
+    }
+
+    /* ==========================================================================
+       3. DOM ELEMENTS & INITIALIZATION
+       ========================================================================== */
+    let currentLesson = null;
+    let selectedBeat2Option = null;
+
+    $(document).ready(function() {
+      // Check onboarding
+      if (!appState.level) {
+        $("#modal-level-select").removeClass("hidden");
+      }
+
+      updateHeaderUI();
+      renderTrackPills();
+      renderPathNodes();
+      initPlayground();
+
+      // Navigation Handlers
+      $("#nav-btn-path, #mob-nav-path, #nav-brand").click(function() {
+        showView("path");
+      });
+
+      $("#nav-btn-playground, #mob-nav-playground").click(function() {
+        showView("playground");
+        appState.xp += 20; // XP bonus for visiting sandbox
+        saveState();
+      });
+
+      // Settings Modal
+      $("#btn-settings").click(function() {
+        $("#settings-level-val").text(appState.level || "Entry");
+        $("#modal-settings").removeClass("hidden");
+      });
+      $("#btn-close-settings").click(function() {
+        $("#modal-settings").addClass("hidden");
+      });
+      $("#btn-reselect-level, #btn-change-level").click(function() {
+        $("#modal-settings").addClass("hidden");
+        $("#modal-level-select").removeClass("hidden");
+      });
+
+      // Level Option Click
+      $(".opt-level-btn").click(function() {
+        const selected = $(this).attr("data-level");
+        appState.level = selected;
+        saveState();
+        $("#modal-level-select").addClass("hidden");
+      });
+
+      // Data Backup / Reset
+      $("#btn-export-json").click(function() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `CodeBite_Backup_${appState.level}.json`);
+        document.body.appendChild(dlAnchor);
+        dlAnchor.click();
+        dlAnchor.remove();
+      });
+
+      $("#btn-reset-data").click(function() {
+        if (confirm("Are you sure you want to reset all your XP, Streaks, and Progress?")) {
+          appState = { ...defaultState };
+          saveState();
+          location.reload();
+        }
+      });
+
+      // Heart Refill Modal Trigger
+      $("#hearts-container").click(function() {
+        if (appState.hearts < 5) {
+          openHeartsRefillModal();
+        }
+      });
+      $("#btn-close-refill").click(function() {
+        $("#modal-hearts-refill").addClass("hidden");
+      });
+
+      // Lesson Close Handler
+      $("#btn-close-lesson").click(function() {
+        $("#view-lesson").addClass("hidden");
+      });
+
+      // Beat Navigation Handlers
+      $("#btn-beat1-next").click(function() {
+        showBeatCard(2);
+      });
+      $("#btn-beat2-prev").click(function() {
+        showBeatCard(1);
+      });
+      $("#btn-beat2-check").click(function() {
+        checkBeat2Answer();
+      });
+      $("#btn-beat3-prev").click(function() {
+        showBeatCard(2);
+      });
+      $("#btn-beat3-submit").click(function() {
+        checkBeat3Answer();
+      });
+
+      // Realtime live updating for Beat 3 sandbox editor
+      $("#beat3-code-editor").on("input", function() {
+        renderBeat3Preview($(this).val());
+      });
+
+      $("#btn-reset-beat3-code").click(function() {
+        if (currentLesson) {
+          $("#beat3-code-editor").val(currentLesson.beat3.initialCode);
+          renderBeat3Preview(currentLesson.beat3.initialCode);
+        }
+      });
+    });
+
+    /* ==========================================================================
+       4. UI RENDERING & GAME ENGINE
+       ========================================================================== */
+    function updateHeaderUI() {
+      $("#header-level-name").text(appState.level || "Entry");
+      $("#stat-streak").text(appState.streak);
+      $("#stat-hearts").text(appState.hearts);
+      $("#stat-xp").text(appState.xp);
+      $("#lesson-hearts-count").text(appState.hearts);
+    }
+
+    function showView(viewName) {
+      if (viewName === "path") {
+        $("#view-path").removeClass("hidden");
+        $("#view-playground").addClass("hidden");
+        $("#nav-btn-path, #mob-nav-path").addClass("bg-green-500 text-slate-950 shadow-md").removeClass("text-slate-400");
+        $("#nav-btn-playground, #mob-nav-playground").removeClass("bg-green-500 text-slate-950 shadow-md").addClass("text-slate-400");
+      } else if (viewName === "playground") {
+        $("#view-path").addClass("hidden");
+        $("#view-playground").removeClass("hidden");
+        $("#nav-btn-playground, #mob-nav-playground").addClass("bg-green-500 text-slate-950 shadow-md").removeClass("text-slate-400");
+        $("#nav-btn-path, #mob-nav-path").removeClass("bg-green-500 text-slate-950 shadow-md").addClass("text-slate-400");
+      }
+    }
+
+    function renderTrackPills() {
+      const $container = $("#track-pills");
+      $container.empty();
+
+      Object.keys(CURRICULUM).forEach(trackKey => {
+        const track = CURRICULUM[trackKey];
+        const isActive = appState.activeTrack === trackKey;
+        const pill = $(`
+          <button class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border ${
+            isActive 
+              ? 'bg-slate-800 text-white border-green-500 shadow-md' 
+              : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
+          }">
+            <i class="${track.icon}"></i> ${track.title}
+          </button>
+        `);
+        pill.click(function() {
+          appState.activeTrack = trackKey;
+          saveState();
+          renderTrackPills();
+          renderPathNodes();
+        });
+        $container.append(pill);
+      });
+    }
+
+    function renderPathNodes() {
+      const $container = $("#path-nodes-container");
+      $container.empty();
+
+      const track = CURRICULUM[appState.activeTrack];
+      if (!track) return;
+
+      const nodes = track.nodes;
+
+      nodes.forEach((node, idx) => {
+        const isCompleted = appState.completedNodes.includes(node.id);
+        const isUnlocked = idx === 0 || appState.completedNodes.includes(nodes[idx - 1].id);
+        const offsetClass = `node-offset-${idx % 4}`;
+
+        const $nodeWrapper = $(`
+          <div class="flex flex-col items-center my-4 relative ${offsetClass} transition-all">
+            <!-- Node Button -->
+            <button class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold border-4 shadow-xl transition transform hover:scale-110 active:scale-95 ${
+              isCompleted 
+                ? 'bg-gradient-to-tr from-green-500 to-emerald-400 text-slate-950 border-green-300 shadow-green-500/30' 
+                : isUnlocked 
+                  ? 'bg-slate-800 text-yellow-400 border-yellow-500 animate-pulse shadow-yellow-500/20' 
+                  : 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed'
+            }">
+              <i class="${isCompleted ? 'fa-solid fa-check' : isUnlocked ? 'fa-solid fa-star' : 'fa-solid fa-lock'}"></i>
+            </button>
+            <span class="mt-2 text-xs font-bold text-slate-300 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700/60 shadow">
+              ${node.title}
+            </span>
+          </div>
+        `);
+
+        if (isUnlocked) {
+          $nodeWrapper.find("button").click(function() {
+            startLesson(node);
+          });
+        }
+
+        $container.append($nodeWrapper);
+      });
+    }
+
+    /* ==========================================================================
+       5. 3-BEAT LESSON FLOW CONTROLLER
+       ========================================================================== */
+    function startLesson(node) {
+      currentLesson = node;
+      selectedBeat2Option = null;
+
+      $("#lesson-title-header").text(node.title);
+      showBeatCard(1);
+
+      // Populate Beat 1
+      $("#beat1-topic-title").text(node.title);
+      $("#beat1-syntax-code").text(node.beat1.syntax);
+      $("#beat1-eli5-text").text(node.beat1.eli5);
+      $("#beat1-example-code").text(node.beat1.exampleHtml);
+      $("#beat1-preview-box").html(node.beat1.exampleHtml);
+
+      // Populate Beat 2
+      $("#beat2-instruction").text(node.beat2.instruction);
+      const formattedCode = node.beat2.codePrompt.replace("___", "<span id='beat2-slot' class='inline-block px-3 py-0.5 bg-yellow-500/20 border border-yellow-500 text-yellow-400 rounded-lg font-bold'>?</span>");
+      $("#beat2-code-prompt").html(formattedCode);
+      $("#beat2-feedback").addClass("hidden");
+
+      const $optionsBox = $("#beat2-options-container");
+      $optionsBox.empty();
+      node.beat2.options.forEach(opt => {
+        const btn = $(`
+          <button class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-200 transition">
+            ${opt}
+          </button>
+        `);
+        btn.click(function() {
+          $(".opt-chip-selected").removeClass("opt-chip-selected bg-yellow-500 text-slate-950 border-yellow-400").addClass("bg-slate-800 text-slate-200 border-slate-700");
+          $(this).addClass("opt-chip-selected bg-yellow-500 text-slate-950 border-yellow-400").removeClass("bg-slate-800 text-slate-200 border-slate-700");
+          selectedBeat2Option = opt;
+          $("#beat2-slot").text(opt);
+        });
+        $optionsBox.append(btn);
+      });
+
+      // Populate Beat 3
+      $("#beat3-objective").text(node.beat3.objective);
+      $("#beat3-code-editor").val(node.beat3.initialCode);
+      $("#beat3-feedback").addClass("hidden");
+      renderBeat3Preview(node.beat3.initialCode);
+
+      $("#view-lesson").removeClass("hidden");
+    }
+
+    function showBeatCard(stepNum) {
+      $(".beat-step").addClass("hidden");
+      $(`#beat-${stepNum}-card`).removeClass("hidden");
+      $("#lesson-progress-text").text(`Beat ${stepNum} of 3`);
+      $("#lesson-progress-bar").css("width", `${(stepNum / 3) * 100}%`);
+    }
+
+    function checkBeat2Answer() {
+      if (!selectedBeat2Option) {
+        showFeedback("#beat2-feedback", "error", "Please tap an option chip first!");
+        return;
+      }
+
+      if (selectedBeat2Option === currentLesson.beat2.correct) {
+        showFeedback("#beat2-feedback", "success", "Spot On! Fantastic job.");
+        setTimeout(() => {
+          showBeatCard(3);
+        }, 800);
+      } else {
+        deductHeart();
+        showFeedback("#beat2-feedback", "error", "Oops! Incorrect code chip. -1 Heart");
+      }
+    }
+
+    function checkBeat3Answer() {
+      const userCode = $("#beat3-code-editor").val();
+      const isPassed = currentLesson.beat3.validate(userCode);
+
+      if (isPassed) {
+        showFeedback("#beat3-feedback", "success", "Challenge Complete! +10 XP");
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+        if (!appState.completedNodes.includes(currentLesson.id)) {
+          appState.completedNodes.push(currentLesson.id);
+          appState.xp += 10;
+          saveState();
+        }
+
+        setTimeout(() => {
+          $("#view-lesson").addClass("hidden");
+          renderPathNodes();
+        }, 1200);
+      } else {
+        deductHeart();
+        showFeedback("#beat3-feedback", "error", "Test Case Failed! Check your syntax or reset code. -1 Heart");
+      }
+    }
+
+    function renderBeat3Preview(code) {
+      const iframe = document.getElementById("beat3-preview-iframe");
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>
+          <style>body { font-family: sans-serif; padding: 12px; margin: 0; color: #0f172a; }</style>
+        </head>
+        <body>${code}</body>
+        </html>
+      `);
+      doc.close();
+    }
+
+    function deductHeart() {
+      if (appState.hearts > 0) {
+        appState.hearts -= 1;
+        saveState();
+        if (appState.hearts === 0) {
+          setTimeout(() => {
+            openHeartsRefillModal();
+          }, 600);
+        }
+      } else {
+        openHeartsRefillModal();
+      }
+    }
+
+    function showFeedback(selector, type, message) {
+      const $el = $(selector);
+      $el.removeClass("hidden bg-green-500/20 text-green-400 border-green-500/40 bg-red-500/20 text-red-400 border-red-500/40 border");
+      if (type === "success") {
+        $el.addClass("bg-green-500/20 text-green-400 border border-green-500/40").html(`<i class="fa-solid fa-circle-check"></i> ${message}`);
+      } else {
+        $el.addClass("bg-red-500/20 text-red-400 border border-red-500/40").html(`<i class="fa-solid fa-triangle-exclamation"></i> ${message}`);
+      }
+    }
+
+    /* ==========================================================================
+       6. HEARTS REFILL DRILL LOGIC
+       ========================================================================== */
+    function openHeartsRefillModal() {
+      const triviaList = [
+        { q: "Which HTML tag creates an unordered bullet list?", options: ["<ul>", "<ol>", "<li>", "<list>"], correct: "<ul>" },
+        { q: "Which CSS property adjusts element inner spacing?", options: ["padding", "margin", "border", "spacing"], correct: "padding" },
+        { q: "How do you write a comment in JavaScript?", options: ["// Comment", "<!-- Comment -->", "/* Comment", "# Comment"], correct: "// Comment" }
+      ];
+      const randomTrivia = triviaList[Math.floor(Math.random() * triviaList.length)];
+
+      $("#refill-question-text").text(randomTrivia.q);
+      $("#refill-feedback").addClass("hidden");
+      const $opts = $("#refill-options-container");
+      $opts.empty();
+
+      randomTrivia.options.forEach(opt => {
+        const btn = $(`
+          <button class="w-full text-left p-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono font-bold text-slate-200 transition flex items-center justify-between">
+            <span>${opt}</span>
+            <i class="fa-solid fa-chevron-right text-slate-500"></i>
+          </button>
+        `);
+        btn.click(function() {
+          if (opt === randomTrivia.correct) {
+            appState.hearts = Math.min(5, appState.hearts + 1);
+            saveState();
+            confetti({ particleCount: 50, spread: 50 });
+            showFeedback("#refill-feedback", "success", "Correct! +1 Heart Restored 🎉");
+            setTimeout(() => {
+              $("#modal-hearts-refill").addClass("hidden");
+            }, 900);
+          } else {
+            showFeedback("#refill-feedback", "error", "Incorrect answer. Give it another shot!");
+          }
+        });
+        $opts.append(btn);
+      });
+
+      $("#modal-hearts-refill").removeClass("hidden");
+    }
+
+    /* ==========================================================================
+       7. STANDALONE CODE PLAYGROUND / SANDBOX ENGINE
+       ========================================================================== */
+    const STARTER_KITS = {
+      "jquery-bg": {
+        html: `<button id="btn-toggle">Click to Toggle Color</button>\n<div id="box">jQuery Magic Arena</div>`,
+        css: `body {\n  font-family: sans-serif;\n  padding: 20px;\n  text-align: center;\n}\n#box {\n  margin-top: 20px;\n  padding: 30px;\n  background: #3b82f6;\n  color: white;\n  font-weight: bold;\n  border-radius: 12px;\n  transition: all 0.3s;\n}\nbutton {\n  padding: 10px 20px;\n  background: #22c55e;\n  color: white;\n  border: none;\n  border-radius: 8px;\n  font-weight: bold;\n  cursor: pointer;\n}`,
+        js: `$('#btn-toggle').click(function() {\n  $('#box').toggleClass('bg-active');\n  if ($('#box').hasClass('bg-active')) {\n    $('#box').css('background', '#a855f7');\n  } else {\n    $('#box').css('background', '#3b82f6');\n  }\n});`
+      },
+      "flex-card": {
+        html: `<div class="card">\n  <h3>Flexbox Card</h3>\n  <p>Responsive layout powered by CSS Flexbox!</p>\n  <button>Learn More</button>\n</div>`,
+        css: `body {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 90vh;\n  background: #0f172a;\n  font-family: sans-serif;\n}\n.card {\n  background: white;\n  padding: 24px;\n  border-radius: 16px;\n  box-shadow: 0 10px 25px rgba(0,0,0,0.2);\n  max-width: 300px;\n  text-align: center;\n}\nbutton {\n  background: #22c55e;\n  color: white;\n  border: none;\n  padding: 8px 16px;\n  border-radius: 8px;\n  font-weight: bold;\n}`,
+        js: `// Add interactive logic if needed`
+      },
+      "char-counter": {
+        html: `<textarea id="txt" placeholder="Type something..."></textarea>\n<div id="counter">0 / 50 characters</div>`,
+        css: `body { font-family: sans-serif; padding: 20px; }\ntextarea {\n  width: 100%;\n  height: 80px;\n  padding: 10px;\n  border-radius: 8px;\n  border: 1px solid #ccc;\n}\n#counter {\n  margin-top: 8px;\n  font-weight: bold;\n  color: #64748b;\n}`,
+        js: `const txt = document.getElementById('txt');\nconst counter = document.getElementById('counter');\n\ntxt.addEventListener('input', () => {\n  const len = txt.value.length;\n  counter.innerText = \`\${len} / 50 characters\`;\n});`
+      }
+    };
+
+    function initPlayground() {
+      // Tab Switcher
+      $(".pg-tab-btn").click(function() {
+        $(".pg-tab-btn").removeClass("active bg-slate-900 text-orange-400 text-blue-400 text-yellow-400 border-t border-x border-slate-800").addClass("text-slate-400");
+        $(this).addClass("active bg-slate-900 border-t border-x border-slate-800");
+
+        const id = $(this).attr("id");
+        $(".pg-code-area").addClass("hidden");
+
+        if (id === "pg-tab-html") {
+          $(this).addClass("text-orange-400");
+          $("#pg-code-html").removeClass("hidden");
+        } else if (id === "pg-tab-css") {
+          $(this).addClass("text-blue-400");
+          $("#pg-code-css").removeClass("hidden");
+        } else if (id === "pg-tab-js") {
+          $(this).addClass("text-yellow-400");
+          $("#pg-code-js").removeClass("hidden");
+        }
+      });
+
+      // Load Starter Kit
+      loadStarterKit("jquery-bg");
+
+      $("#select-starter-kit").change(function() {
+        loadStarterKit($(this).val());
+      });
+
+      $("#btn-run-playground").click(function() {
+        updatePlaygroundPreview();
+      });
+
+      // Auto update preview on typing
+      $("#pg-code-html, #pg-code-css, #pg-code-js").on("input", function() {
+        updatePlaygroundPreview();
+      });
+    }
+
+    function loadStarterKit(kitKey) {
+      const kit = STARTER_KITS[kitKey];
+      if (kit) {
+        $("#pg-code-html").val(kit.html);
+        $("#pg-code-css").val(kit.css);
+        $("#pg-code-js").val(kit.js);
+        updatePlaygroundPreview();
+      }
+    }
+
+    function updatePlaygroundPreview() {
+      const html = $("#pg-code-html").val();
+      const css = $("#pg-code-css").val();
+      const js = $("#pg-code-js").val();
+
+      const iframe = document.getElementById("pg-preview-iframe");
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>${css}</style>
+          <script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>
+        </head>
+        <body>
+          ${html}
+          <script>${js}<\/script>
+        </body>
+        </html>
+      `);
+      doc.close();
+    }
+  </script>
+</body>
+</html>
